@@ -1,1 +1,55 @@
 # ggml-fastapi
+
+FastAPI wrapper using [ctransformers](https://github.com/marella/ctransformers)
+
+## Endpoints
+1. **Index Endpoint**
+   - Path: `/`
+   - Method: `GET`
+   - Summary: Index
+   - Responses: 200 (Successful Response)
+
+2. **Completion Endpoint**
+   - Path: `/v1/completions`
+   - Method: `POST`
+   - Summary: Completion
+   - Parameters: `response_mode` (optional)
+   - Request Body: `ChatCompletionRequestV0` schema
+   - Responses: 200 (Successful Response), 422 (Validation Error)
+
+3. **Chat Endpoint (v1)**
+   - Path: `/v1/chat/completions`
+   - Method: `POST`
+   - Summary: Chat
+   - Request Body: `ChatCompletionRequest` schema
+   - Responses: 200 (Successful Response), 422 (Validation Error)
+
+4. **Chat Endpoint (v2)**
+   - Path: `/v2/chat/completions`
+   - Method: `POST`
+   - Summary: Chatv2 Endpoint
+   - Request Body: `ChatCompletionRequest` schema
+   - Responses: 200 (Successful Response), 422 (Validation Error)
+
+5. **Chat Endpoint (v0)**
+   - Path: `/v0/chat/completions`
+   - Method: `POST`
+   - Summary: Chat
+   - Parameters: `response_mode` (optional)
+   - Request Body: `ChatCompletionRequestV0` schema
+   - Responses: 200 (Successful Response), 422 (Validation Error)
+
+## Schema Definitions
+1. **ChatCompletionRequest**: Requires `messages` (array of `Message` schema). Optional `max_tokens` (integer, default 250).
+2. **ChatCompletionRequestV0**: Requires `prompt` (string).
+3. **Message**: Requires `role` (string), `content` (string).
+4. **ValidationError**: Requires `loc` (array of string or integer), `msg` (string), `type` (string).
+5. **HTTPValidationError**: Contains `detail` (array of `ValidationError` schema).
+
+This is a high-level overview. For detailed information, please refer to the OpenAPI specification【5†source】.
+
+
+## Examples
+* Wizardcoder https://huggingface.co/spaces/matthoffner/wizardcoder-ggml
+* Falcon https://huggingface.co/spaces/matthoffner/falcon-mini/blob/main/api.py
+* Starchat https://huggingface.co/spaces/matthoffner/starchat-ggml

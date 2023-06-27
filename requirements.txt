@@ -1,0 +1,12 @@
+uvicorn
+markdown
+fastapi
+loguru
+torch
+numpy
+transformers
+ctransformers
+accelerate
+langchain
+sse_starlette
+anyio

@@ -17,7 +17,7 @@ from pydantic import BaseModel
 llm = AutoModelForCausalLM.from_pretrained("TheBloke/WizardCoder-15B-1.0-GGML",
                                            model_file="WizardCoder-15B-1.0.ggmlv3.q4_0.bin",
                                            model_type="starcoder")
-app = fastapi.FastAPI(title="🪄WizardCoder💫")
+app = fastapi.FastAPI(title="ggml-fastapi")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -120,7 +120,6 @@ async def chatV2(request: Request, body: ChatCompletionRequest):
 @app.post("/v2/chat/completions")
 async def chatV2_endpoint(request: Request, body: ChatCompletionRequest):
     return await chatV2(request, body)
-
 
 @app.post("/v0/chat/completions")
 async def chat(request: ChatCompletionRequestV0, response_mode=None):

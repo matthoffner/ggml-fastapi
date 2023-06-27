@@ -46,10 +46,9 @@ FastAPI wrapper using [ctransformers](https://github.com/marella/ctransformers)
 4. **ValidationError**: Requires `loc` (array of string or integer), `msg` (string), `type` (string).
 5. **HTTPValidationError**: Contains `detail` (array of `ValidationError` schema).
 
-This is a high-level overview. For detailed information, please refer to the OpenAPI specification【5†source】.
-
 
 ## Examples
+
 * Wizardcoder https://huggingface.co/spaces/matthoffner/wizardcoder-ggml
 * Falcon https://huggingface.co/spaces/matthoffner/falcon-mini/blob/main/api.py
 * Starchat https://huggingface.co/spaces/matthoffner/starchat-ggml

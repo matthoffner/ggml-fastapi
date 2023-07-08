@@ -23,8 +23,7 @@ class ModelWrapper:
         self.model_type = model_type
         self._model = None
 
-    @property
-    def model(self):
+    def get_model(self):
         if self._model is None:
             self._model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
@@ -72,38 +71,9 @@ class ChatCompletionRequest(BaseModel):
 
 @app.post("/v1/completions")
 async def completion(request: ChatCompletionRequestV0, response_mode=None):
-    llm = llm_wrapper.model
+    llm = llm_wrapper.get_model()
     response = llm(request.prompt)
     return response
-
-@app.post("/v1/chat/completions")
-async def chat(request: ChatCompletionRequest):
-    combined_messages = ' '.join([message.content for message in request.messages])
-    llm = llm_wrapper.model
-    tokens = llm.tokenize(combined_messages)
-
-    try:
-        chat_chunks = llm.generate(tokens)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    async def format_response(chat_chunks: Generator, llm) -> Any:
-        for chat_chunk in chat_chunks:
-            response = {
-                'choices': [
-                    {
-                        'message': {
-                            'role': 'system',
-                            'content': llm.detokenize(chat_chunk)
-                        },
-                        'finish_reason': 'stop' if llm.detokenize(chat_chunk) == "[DONE]" else 'unknown'
-                    }
-                ]
-            }
-            yield f"data: {json.dumps(response)}\n\n"
-        yield "event: done\ndata: {}\n\n"
-
-    return StreamingResponse(format_response(chat_chunks, llm), media_type="text/event-stream")
 
 if __name__ == "__main__":
   uvicorn.run(app, host="0.0.0.0", port=8000)

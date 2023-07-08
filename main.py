@@ -14,10 +14,18 @@ from anyio.to_thread import run_sync
 from ctransformers import AutoModelForCausalLM
 from pydantic import BaseModel
 
-llm = AutoModelForCausalLM.from_pretrained("TheBloke/WizardCoder-15B-1.0-GGML",
-                                           model_file="WizardCoder-15B-1.0.ggmlv3.q4_0.bin",
-                                           model_type="starcoder")
-app = fastapi.FastAPI(title="ggml-fastapi")
+DEFAULT_MODEL_NAME = "TheBloke/WizardCoder-15B-1.0-GGML"
+DEFAULT_MODEL_FILE = "WizardCoder-15B-1.0.ggmlv3.q4_0.bin"
+DEFAULT_MODEL_TYPE = "starcoder"
+MODEL_NAME = os.getenv('MODEL_NAME', DEFAULT_MODEL_NAME)
+MODEL_FILE = os.getenv('MODEL_FILE', DEFAULT_MODEL_FILE)
+MODEL_TYPE = os.getenv('MODEL_TYPE', DEFAULT_MODEL_TYPE)
+
+llm = AutoModelForCausalLM.from_pretrained(MODEL_NAME,
+                                           model_file=MODEL_FILE,
+                                           model_type=MODEL_TYPE)
+
+app = fastapi.FastAPI(title=f"{MODEL_NAME}-fastapi")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,13 +41,7 @@ async def index():
         <head>
         </head>
         <body style="background-color:black">
-            <h2 style="font-family:system-ui"><a href="https://huggingface.co/TheBloke/WizardCoder-15B-1.0-GGML">wizardcoder-ggml</a></h2>
-            <iframe
-                src="https://matthoffner-monacopilot.hf.space"
-                frameborder="0"
-                width="95%"
-                height="90%"
-            ></iframe>
+            <h2 style="font-family:system-ui"><a href="https://huggingface.co/TheBloke/WizardCoder-15B-1.0-GGML">ggml-fastapi</a></h2>
             <h2 style="font-family:system-ui"><a href="https://matthoffner-wizardcoder-ggml.hf.space/docs">FastAPI Docs</a></h2>
         </body>
     </html>

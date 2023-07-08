@@ -7,11 +7,6 @@ FastAPI wrapper using [ctransformers](https://github.com/marella/ctransformers)
 * [x] MPT
 
 ## Endpoints
-1. **Index Endpoint**
-   - Path: `/`
-   - Method: `GET`
-   - Summary: Index
-   - Responses: 200 (Successful Response)
 
 2. **Completion Endpoint**
    - Path: `/v1/completions`
@@ -26,21 +21,6 @@ FastAPI wrapper using [ctransformers](https://github.com/marella/ctransformers)
    - Method: `POST`
    - Summary: Chat
    - Request Body: `ChatCompletionRequest` schema
-   - Responses: 200 (Successful Response), 422 (Validation Error)
-
-4. **Chat Endpoint (v2)**
-   - Path: `/v2/chat/completions`
-   - Method: `POST`
-   - Summary: Chatv2 Endpoint
-   - Request Body: `ChatCompletionRequest` schema
-   - Responses: 200 (Successful Response), 422 (Validation Error)
-
-5. **Chat Endpoint (v0)**
-   - Path: `/v0/chat/completions`
-   - Method: `POST`
-   - Summary: Chat
-   - Parameters: `response_mode` (optional)
-   - Request Body: `ChatCompletionRequestV0` schema
    - Responses: 200 (Successful Response), 422 (Validation Error)
 
 ## Schema Definitions

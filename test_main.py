@@ -14,8 +14,9 @@ def mock_model(monkeypatch):
     mock_model.generate.return_value = iter([mocked_model_response])
     mock_model.detokenize.return_value = mocked_model_response
 
-    with patch('main.AutoModelForCausalLM.from_pretrained', return_value=mock_model) as _:
-        yield mock_model
+    monkeypatch.setattr(llm_wrapper, 'model', mock_model)
+    
+    yield mock_model
 
 def test_v1_completions(mock_model):
     response = client.post("/v1/completions", json={"prompt": "Hello world"})

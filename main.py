@@ -40,10 +40,11 @@ async def index():
     html_content = """
     <html>
         <head>
+          <title>ggml-fastapi</title>
         </head>
-        <body style="background-color:black">
-            <h2 style="font-family:system-ui"><a href="https://huggingface.co/TheBloke/WizardCoder-15B-1.0-GGML">ggml-fastapi</a></h2>
-            <h2 style="font-family:system-ui"><a href="https://matthoffner-wizardcoder-ggml.hf.space/docs">FastAPI Docs</a></h2>
+        <body style="background-color:black;font-family:system-ui">
+            <h2>ggml-fastapi</h2>
+            <h2><a href="/docs">FastAPI Docs</a></h2>
         </body>
     </html>
     """

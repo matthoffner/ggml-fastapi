@@ -1,22 +1,19 @@
 from unittest.mock import Mock, patch
 import pytest
 from fastapi.testclient import TestClient
-from main import app, llm_wrapper
+from main import app
 
 client = TestClient(app)
 
 mocked_model_response = 'Hello world'
 
 @pytest.fixture
-def mock_model(monkeypatch):
-    mock_model = Mock()
-    mock_model.tokenize.return_value = "mocked tokens"
-    mock_model.generate.return_value = iter([mocked_model_response])
-    mock_model.detokenize.return_value = mocked_model_response
-
-    monkeypatch.setattr(llm_wrapper, 'model', mock_model)
-    
-    yield mock_model
+def mock_model():
+    with patch("main.llm_wrapper.model") as mock_model:
+        mock_model.tokenize.return_value = "mocked tokens"
+        mock_model.generate.return_value = iter([mocked_model_response])
+        mock_model.detokenize.return_value = mocked_model_response
+        yield mock_model
 
 def test_v1_completions(mock_model):
     response = client.post("/v1/completions", json={"prompt": "Hello world"})

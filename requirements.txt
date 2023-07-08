@@ -10,3 +10,4 @@ accelerate
 langchain
 sse_starlette
 anyio
+httpx

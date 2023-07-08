@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ctransformers import AutoModelForCausalLM
 from pydantic import BaseModel
+from typing import Any, Generator, List, Optional
 
 DEFAULT_MODEL_NAME = "TheBloke/WizardCoder-15B-1.0-GGML"
 DEFAULT_MODEL_FILE = "WizardCoder-15B-1.0.ggmlv3.q4_0.bin"

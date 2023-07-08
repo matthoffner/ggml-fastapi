@@ -1,7 +1,7 @@
 from unittest.mock import Mock, patch
 import pytest
 from fastapi.testclient import TestClient
-from main import app
+from main import app, llm_wrapper
 
 client = TestClient(app)
 
@@ -14,10 +14,7 @@ def mock_model(monkeypatch):
     mock_model.generate.return_value = iter([mocked_model_response])
     mock_model.detokenize.return_value = mocked_model_response
 
-    def mock_from_pretrained(*args, **kwargs):
-        return mock_model
-
-    monkeypatch.setattr("ctransformers.AutoModelForCausalLM.from_pretrained", mock_from_pretrained)
+    monkeypatch.setattr(llm_wrapper, 'model', mock_model)
     return mock_model
 
 def test_v1_completions(mock_model):

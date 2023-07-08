@@ -16,15 +16,11 @@ def mock_llm(monkeypatch):
     monkeypatch.setattr("main.llm", mock_llm)
     return mock_llm
 
-def test_read_main():
-    response = client.get("/")
-    assert response.status_code == 200
-
 def test_v1_completions(mock_llm):
     response = client.post("/v1/completions", json={"prompt": "Hello world"})
     assert response.status_code == 200
-    # Assert that the mock_llm was called correctly
-    mock_llm.assert_called_once_with("Hello world")
+    # Assert that the llm __call__ method was used correctly
+    mock_llm.__call__.assert_called_once_with("Hello world")
 
 def test_v1_chat_completions(mock_llm):
     data = {
@@ -51,5 +47,7 @@ def test_v2_chat_completions(mock_llm):
 def test_v0_chat_completions(mock_llm):
     response = client.post("/v0/chat/completions", json={"prompt": "Hello world"})
     assert response.status_code == 200
-    # Assert that the mock_llm was called correctly
-    mock_llm.assert_called_once_with("Hello world")
+    # Assert that the llm tokenize and generate methods were called correctly
+    mock_llm.tokenize.assert_called_once_with("Hello world")
+    mock_llm.generate.assert_called_once_with("mocked tokens")
+

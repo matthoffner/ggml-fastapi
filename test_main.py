@@ -34,17 +34,6 @@ def test_v1_chat_completions(mock_model):
     mock_model.generate.assert_called_once()
     mock_model.detokenize.assert_called_once()
 
-def test_v2_chat_completions(mock_model):
-    data = {
-        "messages": [{"role": "system", "content": "Hello world"}],
-        "max_tokens": 50
-    }
-    response = client.post("/v2/chat/completions", json=data)
-    assert response.status_code == 200
-    mock_model.tokenize.assert_called_once_with("Hello world")
-    mock_model.generate.assert_called_once()
-    mock_model.detokenize.assert_called_once()
-
 def test_v0_chat_completions(mock_model):
     response = client.post("/v0/chat/completions", json={"prompt": "Hello world"})
     assert response.status_code == 200

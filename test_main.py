@@ -36,3 +36,4 @@ def test_v1_chat_completions(mock_model):
     mock_model.tokenize.assert_called_once_with("Hello world")
     mock_model.generate.assert_called_once()
     mock_model.detokenize.assert_called_once()
+

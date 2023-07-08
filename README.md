@@ -2,6 +2,10 @@
 
 FastAPI wrapper using [ctransformers](https://github.com/marella/ctransformers)
 
+* [x] Falcon
+* [x] WizardCoder
+* [x] MPT
+
 ## Endpoints
 1. **Index Endpoint**
    - Path: `/`

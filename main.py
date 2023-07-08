@@ -4,6 +4,7 @@ import fastapi
 import uvicorn
 from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
+from starlette.responses import EventSourceResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ctransformers import AutoModelForCausalLM
 from pydantic import BaseModel

@@ -4,7 +4,6 @@ import fastapi
 import uvicorn
 from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
-from starlette.responses import EventSourceResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ctransformers import AutoModelForCausalLM
 from pydantic import BaseModel
@@ -105,17 +104,6 @@ async def chat(request: ChatCompletionRequest):
         yield "event: done\ndata: {}\n\n"
 
     return StreamingResponse(format_response(chat_chunks, llm), media_type="text/event-stream")
-
-@app.post("/v0/chat/completions")
-async def chat(request: ChatCompletionRequestV0, response_mode=None):
-    llm = llm_wrapper.model
-    tokens = llm.tokenize(request.prompt)
-    async def server_sent_events(chat_chunks, llm):
-        for chat_chunk in llm.generate(chat_chunks):
-            yield dict(data=json.dumps(llm.detokenize(chat_chunk)))
-        yield dict(data="[DONE]")
-
-    return EventSourceResponse(server_sent_events(tokens, llm))
 
 if __name__ == "__main__":
   uvicorn.run(app, host="0.0.0.0", port=8000)

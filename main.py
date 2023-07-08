@@ -86,7 +86,7 @@ async def chat(request: ChatCompletionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    async def format_response(chat_chunks: Generator) -> Any:
+    async def format_response(chat_chunks: Generator, llm) -> Any:
         for chat_chunk in chat_chunks:
             response = {
                 'choices': [
@@ -102,39 +102,7 @@ async def chat(request: ChatCompletionRequest):
             yield f"data: {json.dumps(response)}\n\n"
         yield "event: done\ndata: {}\n\n"
 
-    return StreamingResponse(format_response(chat_chunks), media_type="text/event-stream")
-
-async def stream_response(tokens: Any) -> None:
-    try:
-        iterator: Generator = llm.generate(tokens)
-        for chat_chunk in iterator:
-            response = {
-                'choices': [
-                    {
-                        'message': {
-                            'role': 'system',
-                            'content': llm.detokenize(chat_chunk)
-                        },
-                        'finish_reason': 'stop' if llm.detokenize(chat_chunk) == "[DONE]" else 'unknown'
-                    }
-                ]
-            }
-            yield f"data: {json.dumps(response)}\n\n"
-        yield b"event: done\ndata: {}\n\n"
-    except Exception as e:
-        print(f"Exception in event publisher: {str(e)}")
-
-
-async def chatV2(request: Request, body: ChatCompletionRequest):
-    combined_messages = ' '.join([message.content for message in body.messages])
-    llm = llm_wrapper.model
-    tokens = llm.tokenize(combined_messages)
-
-    return StreamingResponse(stream_response(tokens))
-
-@app.post("/v2/chat/completions")
-async def chatV2_endpoint(request: Request, body: ChatCompletionRequest):
-    return await chatV2(request, body)
+    return StreamingResponse(format_response(chat_chunks, llm), media_type="text/event-stream")
 
 @app.post("/v0/chat/completions")
 async def chat(request: ChatCompletionRequestV0, response_mode=None):

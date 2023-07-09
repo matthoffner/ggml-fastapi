@@ -8,11 +8,11 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ctransformers import AutoModelForCausalLM
 from pydantic import BaseModel
-from typing import Any, Generator, List, Optional
+from typing import List
 
-DEFAULT_MODEL_NAME = "TheBloke/WizardCoder-15B-1.0-GGML"
-DEFAULT_MODEL_FILE = "WizardCoder-15B-1.0.ggmlv3.q4_0.bin"
-DEFAULT_MODEL_TYPE = "starcoder"
+DEFAULT_MODEL_NAME = ""
+DEFAULT_MODEL_FILE = ""
+DEFAULT_MODEL_TYPE = ""
 MODEL_NAME = os.getenv('MODEL_NAME', DEFAULT_MODEL_NAME)
 MODEL_FILE = os.getenv('MODEL_FILE', DEFAULT_MODEL_FILE)
 MODEL_TYPE = os.getenv('MODEL_TYPE', DEFAULT_MODEL_TYPE)
@@ -112,20 +112,18 @@ def generate_chat_chunk(combined_messages):
         chat_chunks = llm.generate(tokens)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    return chat_chunks
+    return list(chat_chunks)
 
 @app.post("/v2/chat/completions")
 async def chatV2(request: ChatCompletionRequest):
     combined_messages = ' '.join([message.content for message in request.messages])
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        future_to_chat = {executor.submit(generate_chat_chunk, combined_messages): message for message in request.messages}
-        for future in concurrent.futures.as_completed(future_to_chat):
-            message = future_to_chat[future]
-            try:
-                chat_chunks = future.result()
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=str(e))
-            return StreamingResponse(generate_response(chat_chunks, llm_wrapper.get_model()), media_type="text/event-stream")
-            
+        future = executor.submit(generate_chat_chunk, combined_messages)
+        try:
+            chat_chunks = future.result()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        return StreamingResponse(generate_response(chat_chunks, llm_wrapper.get_model()), media_type="text/event-stream")
+        
 if __name__ == "__main__":
   uvicorn.run(app, host="0.0.0.0", port=8000)

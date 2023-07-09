@@ -115,12 +115,12 @@ def generate_chat_chunk(combined_messages):
     return chat_chunks
 
 @app.post("/v2/chat/completions")
-async def chat(request: ChatCompletionRequest):
+async def chatV2(request: ChatCompletionRequest):
     combined_messages = ' '.join([message.content for message in request.messages])
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        future_to_chat = {executor.submit(generate_chat_chunk, combined_messages): user for user in request.users}
+        future_to_chat = {executor.submit(generate_chat_chunk, combined_messages): message for message in request.messages}
         for future in concurrent.futures.as_completed(future_to_chat):
-            user = future_to_chat[future]
+            message = future_to_chat[future]
             try:
                 chat_chunks = future.result()
             except Exception as e:

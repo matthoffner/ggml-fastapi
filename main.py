@@ -85,7 +85,7 @@ async def generate_response(chat_chunks, llm, finish_token):
                         'role': 'system',
                         'content': llm.detokenize(chat_chunk)
                     },
-                    'finish_reason': 'stop' if llm.is_eos_token(chunk) else 'unknown'
+                    'finish_reason': 'stop' if llm.is_eos_token(chat_chunk) else 'unknown'
                 }
             ]
         }

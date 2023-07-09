@@ -2,6 +2,7 @@ import os
 import json
 import fastapi
 import uvicorn
+import concurrent.futures
 from fastapi import HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -103,6 +104,45 @@ async def chat(request: ChatCompletionRequest):
         yield "event: done\ndata: {}\n\n"
 
     return StreamingResponse(event_stream(chat_chunks, llm), media_type="text/event-stream")
+
+def generate_chat_chunk(combined_messages):
+    llm = llm_wrapper.get_model()  # Load the model within each worker process
+    tokens = llm.tokenize(combined_messages)
+    try:
+        chat_chunks = llm.generate(tokens)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return chat_chunks
+
+@app.post("/v2/chat/completions")
+async def chat(request: ChatCompletionRequest):
+    combined_messages = ' '.join([message.content for message in request.messages])
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        future_to_chat = {executor.submit(generate_chat_chunk, combined_messages): user for user in request.users}
+        for future in concurrent.futures.as_completed(future_to_chat):
+            user = future_to_chat[future]
+            try:
+                chat_chunks = future.result()
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+            return StreamingResponse(generate_response(chat_chunks), media_type="text/event-stream")
+
+async def generate_response(chat_chunks):
+    llm = llm_wrapper.get_model()
+    for chat_chunk in chat_chunks:
+        response = {
+            'choices': [
+                {
+                    'message': {
+                        'role': 'system',
+                        'content': llm.detokenize(chat_chunk)
+                    },
+                    'finish_reason': 'stop' if llm.detokenize(chat_chunk) == "[DONE]" else 'unknown'
+                }
+            ]
+        }
+        yield f"data: {json.dumps(response)}\n\n"
+    yield "event: done\ndata: {}\n\n"
 
 if __name__ == "__main__":
   uvicorn.run(app, host="0.0.0.0", port=8000)

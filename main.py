@@ -76,6 +76,22 @@ async def completion(request: ChatCompletionRequestV0, response_mode=None):
     response = llm(request.prompt)
     return response
 
+async def generate_response(chat_chunks, llm):
+    for chat_chunk in chat_chunks:
+        response = {
+            'choices': [
+                {
+                    'message': {
+                        'role': 'system',
+                        'content': llm.detokenize(chat_chunk)
+                    },
+                    'finish_reason': 'stop' if llm.detokenize(chat_chunk) == "[DONE]" else 'unknown'
+                }
+            ]
+        }
+        yield f"data: {json.dumps(response)}\n\n"
+    yield "event: done\ndata: {}\n\n"
+
 @app.post("/v1/chat/completions")
 async def chat(request: ChatCompletionRequest):
     combined_messages = ' '.join([message.content for message in request.messages])
@@ -87,26 +103,10 @@ async def chat(request: ChatCompletionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    async def event_stream(chat_chunks: Generator, llm) -> Any:
-        for chat_chunk in chat_chunks:
-            response = {
-                'choices': [
-                    {
-                        'message': {
-                            'role': 'system',
-                            'content': llm.detokenize(chat_chunk)
-                        },
-                        'finish_reason': 'stop' if llm.detokenize(chat_chunk) == "[DONE]" else 'unknown'
-                    }
-                ]
-            }
-            yield f"data: {json.dumps(response)}\n\n"
-        yield "event: done\ndata: {}\n\n"
-
-    return StreamingResponse(event_stream(chat_chunks, llm), media_type="text/event-stream")
+    return StreamingResponse(generate_response(chat_chunks, llm), media_type="text/event-stream")
 
 def generate_chat_chunk(combined_messages):
-    llm = llm_wrapper.get_model()  # Load the model within each worker process
+    llm = llm_wrapper.get_model()
     tokens = llm.tokenize(combined_messages)
     try:
         chat_chunks = llm.generate(tokens)
@@ -125,24 +125,7 @@ async def chat(request: ChatCompletionRequest):
                 chat_chunks = future.result()
             except Exception as e:
                 raise HTTPException(status_code=500, detail=str(e))
-            return StreamingResponse(generate_response(chat_chunks), media_type="text/event-stream")
-
-async def generate_response(chat_chunks):
-    llm = llm_wrapper.get_model()
-    for chat_chunk in chat_chunks:
-        response = {
-            'choices': [
-                {
-                    'message': {
-                        'role': 'system',
-                        'content': llm.detokenize(chat_chunk)
-                    },
-                    'finish_reason': 'stop' if llm.detokenize(chat_chunk) == "[DONE]" else 'unknown'
-                }
-            ]
-        }
-        yield f"data: {json.dumps(response)}\n\n"
-    yield "event: done\ndata: {}\n\n"
-
+            return StreamingResponse(generate_response(chat_chunks, llm_wrapper.get_model()), media_type="text/event-stream")
+            
 if __name__ == "__main__":
   uvicorn.run(app, host="0.0.0.0", port=8000)

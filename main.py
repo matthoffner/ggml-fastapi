@@ -18,11 +18,10 @@ MODEL_FILE = os.getenv('MODEL_FILE', DEFAULT_MODEL_FILE)
 MODEL_TYPE = os.getenv('MODEL_TYPE', DEFAULT_MODEL_TYPE)
 
 class ModelWrapper:
-    def __init__(self, model_name, model_file, model_type, finish_token="[DONE]"):
+    def __init__(self, model_name, model_file, model_type):
         self.model_name = model_name
         self.model_file = model_file
         self.model_type = model_type
-        self.finish_token = finish_token
         self._model = None
 
     def get_model(self):
@@ -86,7 +85,7 @@ async def generate_response(chat_chunks, llm, finish_token):
                         'role': 'system',
                         'content': llm.detokenize(chat_chunk)
                     },
-                    'finish_reason': 'stop' if llm.detokenize(chat_chunk) == finish_token else 'unknown'
+                    'finish_reason': 'stop' if llm.is_eos_token(chunk) else 'unknown'
                 }
             ]
         }
@@ -104,7 +103,7 @@ async def chat(request: ChatCompletionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    return StreamingResponse(generate_response(chat_chunks, llm, llm_wrapper.finish_token), media_type="text/event-stream")
+    return StreamingResponse(generate_response(chat_chunks, llm), media_type="text/event-stream")
 
 def generate_chat_chunk(combined_messages):
     llm = llm_wrapper.get_model()
@@ -124,7 +123,7 @@ async def chatV2(request: ChatCompletionRequest):
             chat_chunks = future.result()
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        return StreamingResponse(generate_response(chat_chunks, llm_wrapper.get_model(), llm_wrapper.finish_token), media_type="text/event-stream")
+        return StreamingResponse(generate_response(chat_chunks, llm_wrapper.get_model()), media_type="text/event-stream")
         
 if __name__ == "__main__":
   uvicorn.run(app, host="0.0.0.0", port=8000)

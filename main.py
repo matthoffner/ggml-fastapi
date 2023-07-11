@@ -76,7 +76,7 @@ async def completion(request: ChatCompletionRequestV0, response_mode=None):
     response = llm(request.prompt)
     return response
 
-async def generate_response(chat_chunks, llm, finish_token):
+async def generate_response(chat_chunks, llm):
     for chat_chunk in chat_chunks:
         response = {
             'choices': [

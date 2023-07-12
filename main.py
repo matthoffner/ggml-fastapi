@@ -4,7 +4,7 @@ import fastapi
 import uvicorn
 import concurrent.futures
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ctransformers import AutoModelForCausalLM
 from pydantic import BaseModel

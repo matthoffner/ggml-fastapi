@@ -12,16 +12,8 @@
 
 ## Setup
 
-The server requires Python 3.7 or later and FastAPI. The easiest way to install FastAPI is with pip:
-
 ```sh
-pip install fastapi uvicorn
-```
-
-In addition, the server requires the `ctransformers` package, which can be installed with pip:
-
-```sh
-pip install ctransformers
+pip install -r requirements.txt
 ```
 
 ## Usage

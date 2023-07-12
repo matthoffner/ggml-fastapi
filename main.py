@@ -3,12 +3,14 @@ import json
 import fastapi
 import uvicorn
 import concurrent.futures
-from fastapi import HTTPException, Request
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ctransformers import AutoModelForCausalLM
 from pydantic import BaseModel
 from typing import List
+import logging
+import asyncio
 
 DEFAULT_MODEL_NAME = ""
 DEFAULT_MODEL_FILE = ""
@@ -105,25 +107,26 @@ async def chat(request: ChatCompletionRequest):
 
     return StreamingResponse(generate_response(chat_chunks, llm), media_type="text/event-stream")
 
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    logging.error(f"An error occurred: {exc}")
+    return JSONResponse(status_code=500, content={"message": "An error occurred."})
+
 def generate_chat_chunk(combined_messages):
     llm = llm_wrapper.get_model()
     tokens = llm.tokenize(combined_messages)
     try:
         chat_chunks = llm.generate(tokens)
+        logging.info(f"Generated chat chunks: {chat_chunks}")
+        return chat_chunks
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    return list(chat_chunks)
 
 @app.post("/v2/chat/completions")
-async def chatV2(request: ChatCompletionRequest):
+async def chatV2(request: ChatCompletionRequest, background_tasks: BackgroundTasks):
     combined_messages = ' '.join([message.content for message in request.messages])
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        future = executor.submit(generate_chat_chunk, combined_messages)
-        try:
-            chat_chunks = future.result()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-        return StreamingResponse(generate_response(chat_chunks, llm_wrapper.get_model()), media_type="text/event-stream")
+    background_tasks.add_task(generate_chat_chunk, combined_messages)
+    return {"detail": "Chat generation started"}
         
 if __name__ == "__main__":
   uvicorn.run(app, host="0.0.0.0", port=8000)

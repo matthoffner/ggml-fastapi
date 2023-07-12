@@ -7,7 +7,7 @@ from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ctransformers import AutoModelForCausalLM
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List
 import logging
 import asyncio
@@ -112,21 +112,31 @@ async def generic_exception_handler(request: Request, exc: Exception):
     logging.error(f"An error occurred: {exc}")
     return JSONResponse(status_code=500, content={"message": "An error occurred."})
 
+@app.post("/v2/chat/completions")
+async def chatV2(request: ChatCompletionRequest):
+    # Basic input validation
+    if not request.messages:
+        raise HTTPException(status_code=400, detail="No messages provided")
+
+    combined_messages = ' '.join(request.messages)
+    
+    loop = asyncio.get_running_loop()
+    # Use run_in_executor to run the blocking operation in a separate thread
+    chat_chunks = await loop.run_in_executor(None, generate_chat_chunk, combined_messages)
+
+    # Assuming generate_response is available in this scope and llm_wrapper is a global object
+    return StreamingResponse(generate_response(chat_chunks, llm_wrapper.get_model()), media_type="text/event-stream")
+
 def generate_chat_chunk(combined_messages):
     llm = llm_wrapper.get_model()
     tokens = llm.tokenize(combined_messages)
     try:
         chat_chunks = llm.generate(tokens)
-        logging.info(f"Generated chat chunks: {chat_chunks}")
-        return chat_chunks
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/v2/chat/completions")
-async def chatV2(request: ChatCompletionRequest, background_tasks: BackgroundTasks):
-    combined_messages = ' '.join([message.content for message in request.messages])
-    background_tasks.add_task(generate_chat_chunk, combined_messages)
-    return {"detail": "Chat generation started"}
+        logging.error(f"Error while generating chat: {str(e)}")
+        # Rethrow the exception so that it can be caught and handled by FastAPI
+        raise e
+    return list(chat_chunks)
         
 if __name__ == "__main__":
   uvicorn.run(app, host="0.0.0.0", port=8000)

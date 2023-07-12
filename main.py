@@ -107,11 +107,6 @@ async def chat(request: ChatCompletionRequest):
 
     return StreamingResponse(generate_response(chat_chunks, llm), media_type="text/event-stream")
 
-@app.exception_handler(Exception)
-async def generic_exception_handler(request: Request, exc: Exception):
-    logging.error(f"An error occurred: {exc}")
-    return JSONResponse(status_code=500, content={"message": "An error occurred."})
-
 @app.post("/v2/chat/completions")
 async def chatV2(request: ChatCompletionRequest):
     # Basic input validation

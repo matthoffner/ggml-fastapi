@@ -26,11 +26,28 @@ pip install ctransformers
 
 ## Usage
 
-Run the server with:
+You can start the FastAPI server with the following commands, depending on the model type you want to use. You need to replace the placeholders (`your_model_name`, `path_to_your_model_file`) with your actual values.
 
-```sh
-python main.py
+### Using `starcoder` model type
+
+```shell
+MODEL_NAME='TheBloke/WizardCoder-15B-1.0-GGML' MODEL_FILE='WizardCoder-15B-1.0.ggmlv3.q5_0.bin' MODEL_TYPE='starcoder' uvicorn main:app
 ```
+
+### Using `falcon` model type
+
+```shell
+MODEL_NAME='TheBloke/falcon-40b-instruct-GGML' MODEL_FILE='falcon40b-instruct.ggmlv3.q2_K.bin' MODEL_TYPE='falcon' uvicorn main:app
+```
+
+### Using `mpt` model type
+
+```shell
+MODEL_NAME='TheBloke/mpt-30B-instruct-GGML' MODEL_FILE='mpt-30b-instruct.ggmlv0.q4_0.bin' MODEL_TYPE='mpt' uvicorn main:app
+```
+
+This will start the FastAPI application with the specified model. Note that these environment variables are only set for this specific command and won't be available in other shell sessions or scripts. If you need these environment variables for the whole system or across multiple sessions, consider setting them in your shell's configuration file, using Docker or a similar tool, or using a secrets manager.
+
 
 The server will be available at `http://localhost:8000`.
 

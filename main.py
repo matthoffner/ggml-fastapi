@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sse_starlette.sse import EventSourceResponse
 from ctransformers import AutoModelForCausalLM
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Generator
 import logging
 import asyncio
 

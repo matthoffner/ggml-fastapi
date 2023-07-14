@@ -6,6 +6,7 @@ import concurrent.futures
 from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from sse_starlette.sse import EventSourceResponse
 from ctransformers import AutoModelForCausalLM
 from pydantic import BaseModel, Field
 from typing import List

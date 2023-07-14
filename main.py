@@ -91,13 +91,13 @@ async def generate_response(chat_chunks, llm):
                 }
             ]
         }
-        yield f"data: {json.dumps(response)}\n\n"
-    yield "event: done\ndata: {}\n\n"
+        yield dict(data=json.dumps(response))
+    yield dict(data="[DONE]")
 
 @app.post("/v1/chat/completions")
 async def chat(request: ChatCompletionRequest):
-    combined_messages = ' '.join([message.content for message in request.messages])
     llm = llm_wrapper.get_model()
+    combined_messages = ' '.join([message.content for message in request.messages])
     tokens = llm.tokenize(combined_messages)
     
     try:
@@ -105,33 +105,35 @@ async def chat(request: ChatCompletionRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    return StreamingResponse(generate_response(chat_chunks, llm), media_type="text/event-stream")
+    return EventSourceResponse(generate_response(chat_chunks, llm))
+
+async def stream_response(tokens, llm):
+    try:
+        iterator: Generator = llm.generate(tokens)
+        for chat_chunk in iterator:
+            response = {
+                'choices': [
+                    {
+                        'message': {
+                            'role': 'system',
+                            'content': llm.detokenize(chat_chunk)
+                        },
+                        'finish_reason': 'stop' if llm.is_eos_token(chat_chunk) else 'unknown'
+                    }
+                ]
+            }
+            yield dict(data=json.dumps(response))
+        yield dict(data="[DONE]")
+    except Exception as e:
+        print(f"Exception in event publisher: {str(e)}")
 
 @app.post("/v2/chat/completions")
-async def chatV2(request: ChatCompletionRequest):
-    # Basic input validation
-    if not request.messages:
-        raise HTTPException(status_code=400, detail="No messages provided")
-
-    combined_messages = ' '.join(request.messages)
-    
-    loop = asyncio.get_running_loop()
-    # Use run_in_executor to run the blocking operation in a separate thread
-    chat_chunks = await loop.run_in_executor(None, generate_chat_chunk, combined_messages)
-
-    # Assuming generate_response is available in this scope and llm_wrapper is a global object
-    return StreamingResponse(generate_response(chat_chunks, llm_wrapper.get_model()), media_type="text/event-stream")
-
-def generate_chat_chunk(combined_messages):
+async def chatV2_endpoint(request: Request, body: ChatCompletionRequest):
     llm = llm_wrapper.get_model()
+    combined_messages = ' '.join([message.content for message in body.messages])
     tokens = llm.tokenize(combined_messages)
-    try:
-        chat_chunks = llm.generate(tokens)
-    except Exception as e:
-        logging.error(f"Error while generating chat: {str(e)}")
-        # Rethrow the exception so that it can be caught and handled by FastAPI
-        raise e
-    return list(chat_chunks)
+
+    return EventSourceResponse(stream_response(tokens, llm))
         
 if __name__ == "__main__":
   uvicorn.run(app, host="0.0.0.0", port=8000)

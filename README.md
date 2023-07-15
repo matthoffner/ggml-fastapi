@@ -85,22 +85,6 @@ The response is a streaming response, where each chunk is a JSON object that rep
 
 This endpoint is similar to `v1/chat/completions`, but it's designed to handle multiple concurrent chat completions. It uses Python's `concurrent.futures` package to process the chat completions in parallel.
 
-**Request Body:**
-
-```json
-{
-  "messages": [
-    {"role": "system", "content": "Once upon a time"},
-    {"role": "user", "content": "Tell me more."}
-  ],
-  "max_tokens": 250
-}
-```
-
-**Response:**
-
-The response is a streaming response, where each chunk is a JSON object that represents a continuation of the chat conversation. The server will continue to generate text until it generates a message with the content "[DONE]".
-
 ## Customization
 
 You can customize the model that the server uses by setting the `MODEL_NAME`, `MODEL_FILE`, and `MODEL_TYPE` environment variables before running the server.

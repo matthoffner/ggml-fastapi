@@ -4,7 +4,7 @@ ENV MODEL_NAME=""
 ENV DEFAULT_MODEL_FILE=""
 ENV MODEL_USER="TheBloke"
 ENV DEFAULT_MODEL_BRANCH="main"
-ENV MODEL_URL="https://huggingface.co/${MODEL_USER}/${MODEL_NAME}/raw/${DEFAULT_MODEL_BRANCH}/${DEFAULT_MODEL_FILE}"
+ENV MODEL_URL="https://huggingface.co/${MODEL_USER}/${MODEL_NAME}/resolve/${DEFAULT_MODEL_BRANCH}/${DEFAULT_MODEL_FILE}"
 ENV PATH="/usr/local/cuda/bin:$PATH"
 
 RUN apt update && \

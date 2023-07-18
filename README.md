@@ -7,7 +7,7 @@
 ## Models
 
 * [x] Falcon
-* [x] WizardCoder
+* [x] StarCoder
 * [x] MPT
 
 ## Setup
